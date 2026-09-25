@@ -1,0 +1,202 @@
+<template>
+    <div class="slds-grid slds-gutters slds-wrap">       
+        <div class="slds-col slds-size_1-of-1 slds-medium-size_4-of-6">
+            <lightning-card title="Agencies">
+                 <template lwc:if={isMobile}>
+                    <div slot="actions">
+                        <lightning-button label="Reset" onclick={handleReset}></lightning-button>
+                    </div>
+                </template>
+                
+                <template lwc:if={isMobile}>
+                    <div class="slds-var-p-around_medium">
+                        <lightning-combobox
+                            label="Select a Super District"
+                            placeholder="Select..."
+                            value=""
+                            options={districtOptions}
+                            onchange={handleDistrictSelect}>
+                        </lightning-combobox>
+                    </div>
+                </template>
+                <template lwc:else>
+                    <div lwc:dom="manual" class="map map-container" style={dynamicMapStyle}></div>
+                </template>
+            </lightning-card>
+        </div>
+         <div lwc:ref="agencyDiv" class="slds-col slds-size_1-of-1 slds-medium-size_1-of-6 slds-grid slds-grid_vertical slds-gutters slds-var-p-around_small">
+            <template lwc:if={agencyList}>
+                <lightning-card title="Agencies" id="agenciesList" class="slds-m-left_medium">
+                    <lightning-input type="search" label="Search Agencies" value={agencySearch}
+                        onchange={handleAgencySearchChange} class="slds-var-m-around_medium">
+                    </lightning-input>
+                    <template for:each={filteredAgencies} for:item="agency">
+                        <div key={agency.id} data-id={agency.id} onclick={handleAgencyListClick}
+                            class="slds-var-m-around_medium agency-list-item"
+                            style="cursor:pointer;">
+                            <p class="slds-text-body_small slds-text-color_default" style="font-weight:600;">
+                                {agency.name}
+                            </p>                                                    
+                        </div>
+                        
+                    </template>
+                    <template lwc:if={noResults}>
+                        <p class="slds-text-body_small slds-text-color_weak slds-var-p-around_small">No agencies match
+                            your search.</p>
+                    </template>
+                </lightning-card>
+            </template>
+            <template lwc:if={supplierList}>
+                <lightning-card id="suppliersList" title="Suppliers" class="slds-m-left_medium slds-m-top_large">
+                    <lightning-input type="search" label="Search Suppliers" value={supplierSearch}
+                        onchange={handleSupplierSearchChange} class="slds-var-m-around_medium">
+                    </lightning-input>
+                    <template for:each={filteredSuppliers} for:item="supplier">
+                        <div key={supplier.id} data-id={supplier.id} onclick={handleSupplierListClick}
+                            class="slds-var-m-around_medium agency-list-item"
+                            style="cursor:pointer; ">
+                            <p class="slds-text-body_small slds-text-color_default" style="font-weight:600;">{supplier.name}
+                            </p>
+                        </div>
+                    </template>
+                    <template lwc:if={noSupplierResults}>
+                        <p class="slds-text-body_small slds-text-color_weak slds-var-p-around_small">No suppliers match your
+                            search.</p>
+                    </template>
+                </lightning-card>
+            </template>
+        </div>
+        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-6" id="agency-details">
+            <template lwc:if={agencyDetail}>
+                <lightning-card>
+                    <div class="slds-var-p-horizontal_medium">
+                         <lightning-button variant="base" title={agencyDetail.Name} onclick={handleGoToAccount} label={agencyDetail.Name} 
+                          data-id={agencyDetail.Id}  class="slds-text-heading_small"></lightning-button>
+                           <template lwc:if={agencyDetail.Website}>
+                                <dl class="slds-var-m-top_x-small">
+                                    <dt class="slds-form-element__label">
+                                            Website
+                                    </dt>
+                                    <dd class="slds-text-body_regular">
+                                            <lightning-formatted-url value={agencyDetail.Website} tooltip="Website" label={agencyDetail.Website} target="_blank" ></lightning-formatted-url>
+                                    </dd>
+                                </dl>
+                            </template>
+                            <template lwc:if={agencyDetail.Phone}>
+                                <dl class="slds-var-m-top_x-small">
+                                    <dt class="slds-form-element__label">
+                                        Phone
+                                    </dt>
+                                    <dd>
+                                        <lightning-formatted-phone value={agencyDetail.Phone}></lightning-formatted-phone>
+                                    </dd>
+                                </dl>
+                          </template>              
+                        <template lwc:if={hasContacts}>
+                            <p class="slds-text-title_bold slds-var-m-bottom_x-small">Contacts</p>
+                            <template for:each={agencyDetail.Contacts} for:item="contact">
+                                <div key={contact.Id} class="slds-var-m-bottom_small">
+                                     <lightning-button variant="base" title={contact.Full_Name__c} onclick={handleContactLinkClick} label={contact.Full_Name__c} 
+                                           data-id={contact.Id}  class="--slds-g-font-scale-3 underline-btn"></lightning-button>
+                                           <template lwc:if={contact.Title}>
+                                                <dl >
+                                                    <dt class="slds-form-element__label">
+                                                        Title
+                                                    </dt>
+                                                    <dd>
+                                                        {contact.Title}
+                                                    </dd>
+                                                </dl>                                               
+                                            </template> 
+                                            <template lwc:if={contact.Email}>
+                                                 <dl >
+                                                    <dt class="slds-form-element__label">
+                                                        Email
+                                                    </dt>
+                                                    <dd>
+                                                        {contact.Email}
+                                                    </dd>
+                                                </dl>                                            
+                                            </template>  
+                                            <template lwc:if={contact.Phone}>
+                                                <dl >
+                                                    <dt class="slds-form-element__label">
+                                                        Phone
+                                                    </dt>
+                                                    <dd>
+                                                        <lightning-formatted-phone value={contact.Phone}></lightning-formatted-phone>
+                                                    </dd>
+                                                </dl>
+                                            </template>                                
+                                </div>
+                            </template>
+                        </template>
+                    </div>
+                </lightning-card>
+            </template>
+            <template lwc:if={supplierAccount}>
+                <lightning-card >
+                    <div class="slds-var-p-horizontal_medium">
+                         <lightning-button variant="base" title={supplierAccount.Name} onclick={handleGoToAccount} label={supplierAccount.Name} 
+                          data-id={supplierAccount.Id}  class="slds-text-heading_small underline-btn"></lightning-button>
+                        <lightning-formatted-url value={supplierAccount.Website} tooltip="Supplier Website"
+                         label={supplierAccount.Website} target="_blank" class="slds-var-m-top_x-small">
+                           </lightning-formatted-url> 
+                            <div class="slds-border_top slds-m-vertical_small"></div>  
+                           <p class="slds-text-title_bold">Agencies</p>                                            
+                        <template lwc:if={agencyDetails}>
+                        <template for:each={agencyDetails} for:item="agy">
+                            <div key={agy.Id} >
+                                 <lightning-button variant="base" title={agy.Name} onclick={handleGoToAccount} label={agy.Name} 
+                                      data-id={agy.Id}  class="slds-text-title_bold underline-btn"></lightning-button>
+                                <p><lightning-formatted-url value={agy.Website} tooltip="Website" label={agy.Website} target="_blank" ></lightning-formatted-url></p>                               
+                            </div>                
+                            <template lwc:if={agy.hasContacts}>   
+                                <div key={agy.Id} class="slds-border_top slds-m-vertical_small"></div>
+                                <p key={agy.Id}  class="slds-text-title">Contacts</p>                            
+                                <template for:each={agy.Contacts} for:item="contact">
+                                    <div key={contact.Id} class="slds-var-m-bottom_small">
+                                        <div class="slds-border_top slds-m-vertical_small"></div>
+                                        <lightning-button variant="base" title={contact.Full_Name__c} onclick={handleContactLinkClick} label={contact.Full_Name__c} 
+                                            data-id={contact.Id}  class="slds-text-title underline-btn"></lightning-button>                                  
+                                           <template lwc:if={contact.Title}>
+                                                <dl >
+                                                    <dt class="slds-form-element__label">
+                                                        Title
+                                                    </dt>
+                                                    <dd>
+                                                        {contact.Title}
+                                                    </dd>
+                                                </dl>                                               
+                                            </template> 
+                                            <template lwc:if={contact.Email}>
+                                                 <dl >
+                                                    <dt class="slds-form-element__label">
+                                                        Email
+                                                    </dt>
+                                                    <dd>
+                                                        {contact.Email}
+                                                    </dd>
+                                                </dl>                                            
+                                            </template>  
+                                            <template lwc:if={contact.Phone}>
+                                                <dl >
+                                                    <dt class="slds-form-element__label">
+                                                        Phone
+                                                    </dt>
+                                                    <dd>
+                                                        <lightning-formatted-phone value={contact.Phone}></lightning-formatted-phone>
+                                                    </dd>
+                                                </dl>
+                                            </template>                                       
+                                    </div>
+                                </template>
+                            </template>
+                        </template>
+                        </template>
+                    </div>
+                </lightning-card>
+            </template>
+        </div>
+    </div>
+</template>

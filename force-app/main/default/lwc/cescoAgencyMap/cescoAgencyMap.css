@@ -1,0 +1,16 @@
+/* myComponent.css */
+.underline-btn {
+    text-decoration: underline;
+}
+@media (max-width: 768px){
+    .map-container {
+        touch-action: none; /* or 'pan-x pan-y' if you still want panning */
+        max-height: 250px !important;
+        overflow: hidden !important;
+    }
+    .map {
+        touch-action: none; /* or 'pan-x pan-y' if you still want panning */
+        max-height: 250px !important;
+        overflow: hidden !important;
+    }
+}
