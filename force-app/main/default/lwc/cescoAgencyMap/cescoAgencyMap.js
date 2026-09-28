@@ -11,7 +11,15 @@ import getSupplierAgencies from '@salesforce/apex/CescoSuperDistrictMapControlle
 import getAgencies from '@salesforce/apex/CescoSuperDistrictMapController.getAgencies'
 import getAccount from '@salesforce/apex/CescoSuperDistrictMapController.getAccount'
 
+const CONTACT_COLUMNS = [
+    { label: 'Name', fieldName: 'contactUrl', type: 'url',
+      typeAttributes: { label: { fieldName: 'Full_Name__c' }, target: '_blank' } },
+    { label: 'Email', fieldName: 'Email', type: 'email' },
+    { label: 'Phone', fieldName: 'Phone', type: 'phone' }
+];
+
 export default class CescoAgencyMap extends  NavigationMixin(LightningElement) {
+    contactColumns = CONTACT_COLUMNS;
     map;
     leafletInitialized = false;
     districtMap = new Map();
@@ -31,7 +39,8 @@ export default class CescoAgencyMap extends  NavigationMixin(LightningElement) {
     defaultZoom = 4.5;
     centerUsLat = 39.9283;
     centerUsLon =  -98.5795;
-    geoJsonData;
+    statesGeoJsonData;
+    
   
 
     get dynamicMapStyle() {
@@ -58,8 +67,8 @@ export default class CescoAgencyMap extends  NavigationMixin(LightningElement) {
         });
         try {
             const statesFileUrl = `${US_STATES_GEOJSON}/us-states.json`;
-            const response = await fetch(statesFileUrl);
-            this.geoJsonData = await response.json();
+            const statesGeoResponse = await fetch(statesFileUrl);
+            this.statesGeoJsonData = await statesGeoResponse.json();
         } catch (err) {
             this.error = err.message;
         }
@@ -147,36 +156,168 @@ export default class CescoAgencyMap extends  NavigationMixin(LightningElement) {
                         );
                      });
                     bounds.push([lat, lng]);
-                });   
-               const statesFileUrl = `${US_STATES_GEOJSON}/us-states.json`; 
-               fetch(statesFileUrl)
-                    .then(response =>
-                         response.json())
-                        .then(statesGeoJson => {
-                            L.geoJSON(statesGeoJson, {
-                                filter: feature =>
-                                ['Montana', 'Idaho'].includes(feature.properties.name),
-                                style: {
-                                color: '#0011222f',
-                                weight: 3,
-                                opacity: 0.25
-                                }
-                            }).addTo(this.map);
-                                L.geoJSON(statesGeoJson, {
-                                filter: feature =>
-                                ['Montana', 'Idaho'].includes(feature.properties.name),
-                                style: {
-                                color: '#0011222f',
-                                weight: 1
-                            }
-                    }).addTo(this.map);
-               });
+                    this.setMapBorderForSuperDistrict(district.SuperDistrictID__c, district.Html_Fore_Color__c);
+                }); 
 
             })
             .catch(error => {
                 console.error(error);
                 this.showErrorToast();
             });
+    }
+    setMapBorderForSuperDistrict(superDistrict, color){
+        switch(superDistrict){
+            case 'SDBIGSKY':{
+                L.geoJSON(this.statesGeoJsonData, {
+                                filter: feature =>
+                                ['Montana', 'Idaho'].includes(feature.properties.name),
+                                style: {
+                                    color: color,
+                                    opacity: 0.25,
+                                    fillOpacity: .25
+                                }
+                            }).addTo(this.map);
+                            return;
+            }
+            case 'SDCASCAD':{
+                L.geoJSON(this.statesGeoJsonData, {
+                        filter: feature =>
+                        ['Washington'].includes(feature.properties.name),
+                        style: {
+                            color: color,
+                            opacity: 0.25,
+                            fillOpacity: .40
+                    }
+                }).addTo(this.map);
+                 return;
+            }
+            case 'SDGLAKES':{
+                L.geoJSON(this.statesGeoJsonData, {
+                        filter: feature =>
+                        ['Michigan', 'Pennsylvania', 'Ohio'].includes(feature.properties.name),
+                        style: {
+                            color: color,
+                            weight: 3,
+                            opacity: 0.25,
+                            fillOpacity: .4
+                    }
+                }).addTo(this.map);
+                 return;
+            }
+             case 'SDGPLAIN':{
+                L.geoJSON(this.statesGeoJsonData, {
+                        filter: feature =>
+                        ['Kansas', 'Nebraska'].includes(feature.properties.name),
+                        style: {
+                            color: color,
+                            opacity: 0.25,
+                            fillOpacity: .4
+                    }
+                }).addTo(this.map);
+                 return;
+            }
+             case 'SDLOWE':{
+                L.geoJSON(this.statesGeoJsonData, {
+                        filter: feature =>
+                        ['Georgia', 'South Carolina'].includes(feature.properties.name),
+                        style: {
+                            color: color,
+                            opacity: 0.25,
+                            fillOpacity: .4
+                    }
+                }).addTo(this.map);
+                 return;
+            }
+             case 'SDMIDATL':{
+                L.geoJSON(this.statesGeoJsonData, {
+                        filter: feature =>
+                        ['North Carolina', 'Virginia'].includes(feature.properties.name),
+                        style: {
+                            color: color,
+                            weight: 3,
+                            opacity: 0.25,
+                            fillOpacity: .1
+                    }
+                }).addTo(this.map);
+                 return;
+            }
+             case 'SDNCENTR':{
+                L.geoJSON(this.statesGeoJsonData, {
+                        filter: feature =>
+                        ['Illinois', 'Wisconsin'].includes(feature.properties.name),
+                        style: {
+                            color: color,
+                            weight: 3,
+                            opacity: 0.25,
+                            fillOpacity: .1
+                    }
+                }).addTo(this.map);
+                 return;
+            }
+             case 'SDNPACIF':{
+                L.geoJSON(this.statesGeoJsonData, {
+                        filter: feature =>
+                        ['Oregon', 'Alaska'].includes(feature.properties.name),
+                        style: {
+                            color: color,
+                            opacity: .25,
+                            fillOpacity: .40
+                    }
+                }).addTo(this.map);
+                 return;
+            }
+             case 'SDNPLAIN':{
+                L.geoJSON(this.statesGeoJsonData, {
+                        filter: feature =>
+                        ['Minnesota', 'Iowa','North Dakota'].includes(feature.properties.name),
+                        style: {
+                            color: color,
+                            weight: 3,
+                            opacity: 0.25,
+                            fillOpacity: .1
+                    }
+                }).addTo(this.map);
+                 return;
+            }
+             case 'SDRIVERV':{
+                L.geoJSON(this.statesGeoJsonData, {
+                        filter: feature =>
+                        ['Indiana', 'Kentucky'].includes(feature.properties.name),
+                        style: {
+                            color: color,
+                            weight: 3,
+                            opacity: 0.25,
+                            fillOpacity: .1
+                    }
+                }).addTo(this.map);
+                 return;
+            }
+            case 'SDROCKMN':{
+                L.geoJSON(this.statesGeoJsonData, {
+                        filter: feature =>
+                        ['Colorado', 'South Dakota', 'Wyoming'].includes(feature.properties.name),
+                        style: {
+                            color: color,
+                            opacity: 0.25,
+                            fillOpacity: .40
+                    }
+                }).addTo(this.map);
+                 return;
+            }
+            case 'SDSWEST':{
+                L.geoJSON(this.statesGeoJsonData, {
+                        filter: feature =>
+                        ['Arizona', 'Utah', 'Nevada', 'Texas', 'New Mexico'].includes(feature.properties.name),
+                        style: {
+                            color: color,
+                            opacity: 0.25,
+                            fillOpacity: .5
+                    }
+                }).addTo(this.map);
+                 return;
+            }
+        }
+
     }
     get filteredSuppliers() {
         if (!this.supplierList) return [];
@@ -231,6 +372,7 @@ export default class CescoAgencyMap extends  NavigationMixin(LightningElement) {
             return [];
         });
         this.agencyList = agencies.map(agy => ({id: agy.Id, name: agy.Name}));
+        this.template.querySelector('#agency-details')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         if(this.isMobile){
             const targetSection = his.refs.agencyDiv;            
             if (targetSection) {
@@ -323,14 +465,21 @@ export default class CescoAgencyMap extends  NavigationMixin(LightningElement) {
                                 return [];
                             });
         const agencyIds = supplierAgencies.map(a => a.Id);
-        this.agencyDetails = await getAgencies({ accountIds: agencyIds});   
-        this.agencyDetails.forEach(a => {
-            if(a.Contacts?.length > 0){
-                a.hasContacts = true;
-            } else{
-                a.hasContacts = false;
-            }
-        });     
+        const rawAgencies = await getAgencies({ accountIds: agencyIds });
+        this.agencyDetails = await Promise.all(
+            rawAgencies.map(async a => {
+                const contacts = await Promise.all(
+                    (a.Contacts || []).map(async c => {
+                        const url = await this[NavigationMixin.GenerateUrl]({
+                            type: 'standard__recordPage',
+                            attributes: { recordId: c.Id, objectApiName: 'Contact', actionName: 'view' }
+                        });
+                        return { ...c, contactUrl: url };
+                    })
+                );
+                return { ...a, Contacts: contacts, hasContacts: contacts.length > 0 };
+            })
+        );     
         console.log("Agency Details: " + this.agencyDetail);
     }
 
